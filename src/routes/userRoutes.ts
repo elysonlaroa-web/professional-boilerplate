@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { UserController } from "../controllers/userController";
 import { validate } from "../middleware/validate";
+import { authMiddleware } from "../middleware/auth";
 import {
   createUserSchema,
   updateUserSchema,
@@ -10,6 +11,9 @@ import {
 import { asyncHandler } from "../utils/asyncHandler";
 
 export const userRoutes = Router();
+
+// Protect all user routes
+userRoutes.use(authMiddleware);
 
 userRoutes.get(
   "/",
