@@ -263,3 +263,212 @@ Winston provides organized logs with timestamps, severity levels, and contextual
 I would follow the existing User CRUD structure. I would add a Product entity, DTO validation schemas, service, controller, routes, and a database migration. This allows me to reuse the existing middleware, error handling, and response utilities.
 8. What additional features would you add to make this boilerplate even more production-ready?
 I would add automated unit and integration testing, API documentation using Swagger, authentication and role-based authorization, rate limiting improvements, automated backups, and CI/CD deployment workflows
+
+Activity 9: Implement JWT Authentication
+Professional Boilerplate API
+A RESTful API built with Node.js, Express, TypeScript, TypeORM, and
+MySQL. This project provides user management, input validation,
+centralized error handling, database migrations, seeding, logging, and
+JWT-based authentication for protected endpoints.
+Features
+- JWT authentication (login and token verification)
+- Protected user CRUD endpoints
+- Password hashing with bcrypt
+- Input validation using Joi
+- Centralized error handling
+- MySQL database with TypeORM migrations
+- Seeded sample accounts
+- Logging and health check
+Technology Stack
+- Node.js
+- Express
+- TypeScript
+- MySQL
+- TypeORM
+- JWT (jsonwebtoken)
+- bcrypt
+- Joi
+- Winston
+- tsx
+Setup
+Prerequisites
+Install Node.js, MySQL, and Git.
+Installation
+1. Clone the repository.
+2. Navigate to the project directory.
+3. Install dependencies:
+   npm install
+4. Create a MySQL database named boilerplate_db:
+   CREATE DATABASE boilerplate_db;
+5. Create a .env file in the project root and configure it:
+   NODE_ENV=development
+   PORT=3000
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USERNAME=root
+   DB_PASSWORD=
+   DB_DATABASE=boilerplate_db
+   FRONTEND_URL=http://localhost:4200
+   JWT_SECRET=replace_with_a_secure_random_secret
+   JWT_EXPIRES_IN=86400
+   Generate a secure JWT secret with:
+   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+   Keep .env private and do not commit it.
+6. Run migrations:
+   npx tsx ./node_modules/typeorm/cli.js migration:run -d src/config/data-source.ts
+7. Seed sample users:
+   npm run seed
+8. Start the development server:
+   npm run dev
+9. Build the project:
+   npm run build
+Authentication Flow
+1. The client submits email and password to the login endpoint.
+2. The API finds the user and checks whether the account is active.
+3. bcrypt compares the submitted password with the stored password
+   hash.
+4. If valid, the API signs a JWT containing the user's ID and email.
+5. The client stores the token securely and sends it with requests to
+   protected routes.
+6. Authentication middleware extracts and verifies the token and
+   attaches the decoded user information to the request.
+7. Requests with missing or invalid tokens are rejected with
+   401 Unauthorized.
+Getting a Token (Login)
+Endpoint: POST /api/auth/login
+
+Request body:
+{
+  "email": "test@example.com",
+  "password": "Test123!"
+}
+Example response:
+{
+  "success": true,
+  "data": {
+    "token": "<JWT_TOKEN>",
+    "user": {
+      "id": 2,
+      "email": "test@example.com",
+      "name": "Test User"
+    }
+  }
+}
+The response token is illustrative. The API's actual response format may
+depend on the controller and response utility implementation.
+Using the Token
+Include the token in the HTTP Authorization header for protected routes:
+Authorization: Bearer <JWT_TOKEN>
+In Postman: 1. Open the request's Authorization tab. 2. Select Bearer
+Token. 3. Paste the token into the Token field (without quotation marks
+or manually adding Bearer). 4. Send the request.
+Endpoint Reference
+Public endpoints
+  Method   Endpoint            Description
+  GET      /health           Health check (including database status)
+POST     /api/auth/login   Authenticate and obtain a JWT
+Protected endpoints
+All /api/users routes require a valid JWT, as authMiddleware is
+applied to the user router.
+
+  Method   Endpoint           Description
+  GET      /api/users       List users (pagination may be supported)
+GET      /api/users/:id   Retrieve a user
+POST     /api/users       Create a user
+PUT      /api/users/:id   Update a user
+DELETE   /api/users/:id   Delete a user
+Verify the endpoint list against the routes currently mounted in the
+application. This README assumes the authentication router is mounted
+at /api/auth and provides POST /login.
+
+Testing Authentication in Postman
+Login
+1. Send POST http://localhost:3000/api/auth/login.
+2. Select Body → raw → JSON.
+3. Submit the sample credentials.
+4. Copy the returned token.
+Valid token
+1. Send GET http://localhost:3000/api/users.
+2. Select Authorization → Bearer Token.
+3. Paste the token.
+4. Send the request. A successful request should return an appropriate
+   success status.
+No token
+1. Send GET http://localhost:3000/api/users.
+2. Select Authorization → No Auth.
+3. Send the request. The protected endpoint should reject it with
+   401 Unauthorized.
+Invalid token
+Send a protected request using a random or malformed token. The API
+should reject it with 401 Unauthorized.
+Seeded Sample Accounts
+The seeder previously reported these email addresses:
+
+  Role/Account   Email
+  Admin          admin@example.com
+Test User      test@example.com
+
+Sample passwords identified from the seeder:
+
+  Email                 Password
+  admin@example.com   Admin123!
+test@example.com    Test123!
+
+These are development-only credentials. Change or remove them before
+deployment.
+Reflection
+1. Authentication vs. authorization: Authentication verifies who
+   you are, while authorization determines what you're allowed to do.
+   For example, logging in verifies your identity (authentication),
+   while accessing an admin dashboard checks your permissions
+   (authorization).
+2. Why JWT is stateless: JWT is stateless because the server
+   doesn't need to store session data for each user. This helps
+   scalability because multiple servers can verify tokens
+   independently.
+3. Three parts of JWT: Header (token type and algorithm), Payload
+   (claims or user information), and Signature (verifies the token's
+   integrity and authenticity).
+4. Sensitive data in JWT: JWT payloads are encoded, not encrypted
+   by default. Anyone holding the token can decode its payload, so
+   sensitive information like passwords should never be included.
+5. How bcrypt works: Bcrypt hashes passwords using a salt and
+   configurable rounds. The salt makes hashes unique, while rounds
+   increase the computational cost to make brute-force attacks harder.
+6. Stolen JWT: Anyone possessing a valid stolen token may
+   impersonate its owner. Mitigate this using HTTPS, short token
+   expiration, secure storage, and token revocation strategies.
+7. Importance of HTTPS: HTTPS encrypts data transmitted between the
+   client and server, helping prevent attackers from intercepting JWT
+   tokens.
+8. Access vs. refresh token: Access tokens are short-lived and used
+   to access protected resources. Refresh tokens last longer and are
+   used to obtain new access tokens without logging in again.
+9. How middleware identifies the user: The middleware extracts the
+   JWT from the Authorization header, verifies it, and reads the user
+   information (such as userId) from its payload.
+10. Role-based authorization: I would add a role field to the User
+    entity, include the user's role in the token or retrieve it from the
+    database, and create middleware that checks whether the user has the
+    required role before allowing access.
+Security Notes
+- Use HTTPS in production.
+- Never commit .env or disclose the JWT signing secret.
+- Never include passwords or other sensitive information in JWT
+  payloads.
+- Use short-lived tokens and consider refresh-token rotation and
+  revocation.
+- Keep seeded credentials for development only.
+- JWT payloads are signed, not inherently encrypted.
+Project Structure
+src/
+├── config/
+├── controllers/
+├── dto/
+├── entities/
+├── middleware/
+├── migrations/
+├── routes/
+├── seeds/
+├── services/
+└── utils/
