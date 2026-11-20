@@ -472,3 +472,223 @@ src/
 ├── seeds/
 ├── services/
 └── utils/
+
+Activity 10: Email Verification & Password Reset
+Professional Boilerplate API
+A backend API built with Node.js, TypeScript, Express, TypeORM, and MySQL, featuring authentication, email verification, and password reset functionality.
+Features
+- User registration
+- Email verification with expiring verification tokens
+- Login for verified accounts
+- JWT-based authentication
+- Authenticated user profile endpoint
+- Resend email verification
+- Forgot-password flow with expiring reset tokens
+- Reset password
+- Input validation using Joi
+- Structured error handling and logging
+- MySQL database with TypeORM migrations
+Tech Stack
+- Node.js
+- TypeScript
+- Express
+- TypeORM
+- MySQL
+- Joi
+- bcrypt
+- JSON Web Tokens (JWT)
+- Nodemailer
+- Ethereal Email (development email testing)
+- tsx (development runner)
+Requirements
+Install the following before running the project:
+- Node.js and npm
+- MySQL server
+- Postman (for API testing)
+Installation
+1. Clone or download this repository.
+2. Open the project folder in a terminal.
+3. Install dependencies:
+   npm install
+4. Configure environment variables in .env (see below).
+5. Run the database migrations using the project's migration scripts.
+6. Start the development server:
+   npm run dev
+The API runs at http://localhost:3000 (unless configured otherwise).
+Environment Configuration
+Create or update .env in the project root. Use the project's existing variable names and values as your template; do not commit real credentials.
+
+Typical settings include:
+DB_HOST=localhost
+DB_PORT=3308
+DB_DATABASE=boilerplate_db
+DB_USERNAME=your_mysql_username
+DB_PASSWORD=your_mysql_password
+
+JWT_SECRET=replace_with_a_secure_secret
+JWT_EXPIRES_IN=your_existing_jwt_expiration
+
+FRONTEND_URL=http://localhost:4200
+
+SMTP_HOST=smtp.ethereal.email
+SMTP_PORT=587
+SMTP_USER=your_ethereal_username
+SMTP_PASS=your_ethereal_password
+EMAIL_FROM=your_sender_address
+Preserve the actual variable names, port, and other settings used in your project's .env and src/config/env.ts. Never publish your .env file or secrets.
+
+Running the API
+Start the development server:
+npm run dev
+Expected startup messages indicate that the database connection and API server are running. The API is configured to use port 3000 in the current development setup.
+
+Health check:
+GET http://localhost:3000/health
+Authentication Flow
+1. Register
+Create an account. The API creates an unverified account and sends a verification email.
+POST /api/auth/register
+Content-Type: application/json
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "Password123",
+  "age": 30
+}
+2. Verify email
+Open the verification email and use the token included in the verification link.
+GET /api/auth/verify-email?token=YOUR_VERIFICATION_TOKEN
+A successful verification activates email verification status for the account. Verification tokens expire (configured for 24 hours) and cannot be reused after successful consumption.
+3. Login
+Only verified accounts can log in.
+POST /api/auth/login
+Content-Type: application/json
+{
+  "email": "john.doe@example.com",
+  "password": "Password123"
+}
+On success, the API returns an authentication token and user information. Use the returned token when accessing protected endpoints.
+4. Access your profile
+GET /api/auth/me
+Authorization: Bearer YOUR_JWT_TOKEN
+Replace YOUR_JWT_TOKEN with the token returned after login.
+5. Resend verification email
+Request another verification email for an account that needs verification.
+POST /api/auth/resend-verification
+Content-Type: application/json
+{
+  "email": "john.doe@example.com"
+}
+6. Forgot password
+Request a password reset link.
+POST /api/auth/forgot-password
+Content-Type: application/json
+{
+  "email": "john.doe@example.com"
+}
+The API returns a generic response to avoid revealing whether an email address is registered.
+7. Reset password
+Use the reset token from the password-reset email to set a new password.
+POST /api/auth/reset-password
+Content-Type: application/json
+{
+  "token": "YOUR_RESET_TOKEN",
+  "newPassword": "NewPassword456"
+}
+Reset tokens expire (configured for 1 hour) and are invalidated after successful use.
+8. Log in with the new password
+Log in using your new password through POST /api/auth/login.
+API Endpoints
+All authentication endpoints are prefixed with /api/auth.
+Method	Endpoint	Access	Purpose
+POST	/api/auth/register	Public	Register and send verification email
+GET	/api/auth/verify-email?token=...	Public	Verify an email address
+POST	/api/auth/resend-verification	Public	Request another verification email
+POST	/api/auth/login	Public	Log in to a verified account
+GET	/api/auth/me	Authenticated	Get the current user's profile
+POST	/api/auth/forgot-password	Public	Request a password-reset email
+POST	/api/auth/reset-password	Public	Set a new password using a reset token
+
+
+Example endpoint URLs
+- Register: http://localhost:3000/api/auth/register
+- Verify email: http://localhost:3000/api/auth/verify-email?token=YOUR_VERIFICATION_TOKEN
+- Resend verification: http://localhost:3000/api/auth/resend-verification
+- Login: http://localhost:3000/api/auth/login
+- Current user: http://localhost:3000/api/auth/me
+- Forgot password: http://localhost:3000/api/auth/forgot-password
+- Reset password: http://localhost:3000/api/auth/reset-password
+Testing Emails with Ethereal
+Ethereal Email provides test inboxes for development. Messages are captured for preview and are not delivered to real recipients.
+1. Register a user or request a password reset in Postman.
+2. Keep the API terminal open.
+3. Look for the logged Ethereal preview URL after the email is sent.
+4. Open the preview URL in your browser to inspect the message.
+5. Use the verification or reset link/token in your API testing.
+Notes
+- The email service logs preview URLs in development.
+- Ethereal is for testing, not production email delivery.
+- Keep SMTP credentials private.
+Security Features
+- Email verification: accounts must verify their email before login.
+- Expiring verification tokens: verification tokens have a limited lifetime.
+- Single-use verification tokens: tokens are invalidated after successful verification.
+- Password reset tokens: reset tokens have a limited lifetime.
+- Single-use reset tokens: reset tokens are invalidated after successful password reset.
+- Password hashing: passwords are hashed with bcrypt before storage.
+- JWT authentication: protected endpoints require a valid bearer token.
+- Input validation: request data is validated using Joi schemas.
+- Email enumeration protection: forgot-password responses are generic for known and unknown email addresses.
+- Duplicate registration protection: registering an already-used email is rejected.
+- Token fields protected from default entity selection: sensitive token fields are configured not to be selected by default.
+Testing with Postman
+For requests with JSON bodies:
+1. Select the request method and endpoint.
+2. Open Body.
+3. Select raw.
+4. Select JSON.
+5. Paste the example JSON.
+6. Click Send.
+For authenticated requests, use the Authorization tab, select Bearer Token, and paste the JWT.
+Development Scripts
+Use the scripts available in your package.json. In the current setup:
+npm run dev
+Migration commands depend on the scripts configured in package.json; use those project scripts to generate, run, or revert migrations.
+Suggested Security Practices
+- Do not commit .env files or credentials.
+- Use a strong, unique JWT secret.
+- Use HTTPS in production.
+- Configure production email delivery before deployment.
+- Review environment settings and error logging before deploying.
+- Keep dependencies updated.
+
+Reflection
+1. Why is email verification important for security? What problems does it prevent?
+It confirms that the user owns the email address. It helps prevent fake accounts, mistyped emails, and unauthorized use of someone else's email.
+
+2. Explain the "always return success" pattern in forgot password. Why is it a security best practice?
+It returns the same response whether the email exists or not. This prevents attackers from discovering registered email addresses.
+
+3. What's the difference between a verification token and a reset token? Why do they have different expiration times?
+A verification token confirms email ownership, while a reset token allows changing a password. Verification tokens last 24 hours, while reset tokens last 1 hour because password-reset tokens grant more sensitive access.
+
+4. Why do we use crypto.randomBytes(32) instead of Math.random() or Date.now() for token generation?
+crypto.randomBytes(32) generates cryptographically secure random values that are difficult to predict, making tokens safer against guessing attacks.
+
+5. What happens if a user never verifies their email? How does your system handle this?
+The user cannot log in until their email is verified. They can request another verification email to complete the process.
+
+6. Explain why tokens are cleared after use. What security risk does this prevent?
+Tokens are cleared after use to prevent them from being reused. This protects against replay attacks and unauthorized repeated actions.
+
+7. What is email enumeration and how does your implementation prevent it?
+Email enumeration is discovering whether an email address is registered. Our forgot-password endpoint returns the same generic message regardless of whether the email exists.
+
+8. If you had to implement two-factor authentication (2FA) on top of this system, how would you approach it?
+I would add a second verification step after login, such as a time-based OTP from an authenticator app. The user would need both their password and the OTP to access the account.
+
+9. What are the trade-offs between using Ethereal (test service) vs. SendGrid (production service)?
+Ethereal is free and useful for testing because it lets us preview emails without delivering them to real users. SendGrid is designed for real email delivery, scalability, and production use, but may require payment and configuration.
+
+10. How would you handle a situation where a user's email provider marks your emails as spam?
+I would configure SPF, DKIM, and DMARC, use a trusted email service, avoid spam-like content, and ask users to check their spam folder.

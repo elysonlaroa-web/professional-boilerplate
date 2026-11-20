@@ -63,4 +63,9 @@ export class InternalError extends AppError {
   constructor(message = "An unexpected error occurred") {
     super(message, 500, "INTERNAL_ERROR", false);
   }
-}   
+}
+export class BadRequestError extends AppError {
+  constructor(message: string) {
+    super(message, 400, "BAD_REQUEST");
+  }
+}
